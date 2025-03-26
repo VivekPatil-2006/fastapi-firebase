@@ -1,36 +1,9 @@
-from fastapi import FastAPI, HTTPException
-import firebase_admin
-from firebase_admin import credentials, firestore
-from firebase_admin.exceptions import FirebaseError
-
-# Initialize Firebase (Prevent duplicate initialization)
-if not firebase_admin._apps:
-    cred = credentials.Certificate("serviceAccountKey.json")  # Path to Firebase JSON key
-    firebase_admin.initialize_app(cred)
-
-db = firestore.client()  # Firestore client
+from fastapi import FastAPI
 
 # Initialize FastAPI app
 app = FastAPI()
 
-@app.api_route("/", methods=["GET", "HEAD"])
+@app.get("/")
 def read_root():
-    """Default route to check if FastAPI is running"""
-    return {"message": "FastAPI is running!"}
-
-@app.get("/user/{user_id}")
-def get_user(user_id: str):
-    """Fetch user data from Firestore using user_id"""
-    try:
-        doc_ref = db.collection("users").document(user_id)
-        doc = doc_ref.get()
-
-        if doc.exists:
-            return {"user_id": user_id, **doc.to_dict()}
-        else:
-            raise HTTPException(status_code=404, detail="User not found")
-
-    except FirebaseError as e:
-        raise HTTPException(status_code=500, detail=f"Firestore error: {str(e)}")
-
-# Run with: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+    """Return a simple Hello message"""
+    return {"message": "Hello"}
