@@ -10,6 +10,11 @@ db = firestore.client()  # Firestore client
 # Initialize FastAPI app
 app = FastAPI()
 
+@app.get("/")
+def read_root():
+    """Default route to check if FastAPI is running"""
+    return {"message": "FastAPI is running!"}
+
 @app.get("/user/{user_id}")
 def get_user(user_id: str):
     """Fetch user data from Firestore using user_id"""
@@ -21,4 +26,4 @@ def get_user(user_id: str):
     else:
         raise HTTPException(status_code=404, detail="User not found")
 
-# Run the FastAPI server using: uvicorn main:app --reload
+# Run the FastAPI server using: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
