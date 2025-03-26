@@ -20,17 +20,28 @@ def read_root():
 
 @app.get("/user/{user_id}")
 def get_user(user_id: str):
-    """Fetch user data from Firestore using user_id"""
+    """Fetch user data from Firestore subcollection 'users'"""
     try:
-        doc_ref = db.collection("users").document(user_id)
+        # Assuming there's only one parent document, retrieve the first document's ID
+        parent_docs = db.collections()  # Get all top-level collections
+        parent_doc_id = None
+
+        for collection in parent_docs:
+            parent_doc_id = collection.id
+            break  # Get the first parent document
+
+        if not parent_doc_id:
+            raise HTTPException(status_code=404, detail="No parent document found")
+
+        # Fetch user data from the subcollection
+        doc_ref = db.collection(parent_doc_id).document("users").collection(user_id).document(user_id)
         doc = doc_ref.get()
 
         if doc.exists:
             return {"user_id": user_id, **doc.to_dict()}
         else:
-            raise HTTPException(status_code=404, detail="User not found")
+            raise HTTPException(status_code=404, detail="User not found in subcollection")
 
     except FirebaseError as e:
         raise HTTPException(status_code=500, detail=f"Firestore error: {str(e)}")
 
-# Run with: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
