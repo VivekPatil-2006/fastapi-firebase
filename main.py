@@ -22,26 +22,21 @@ def read_root():
 def get_user(user_id: str):
     """Fetch user data from Firestore subcollection 'users'"""
     try:
-        # Assuming there's only one parent document, retrieve the first document's ID
+        # Find the parent document that contains the 'users' subcollection
         parent_docs = db.collections()  # Get all top-level collections
-        parent_doc_id = None
 
         for collection in parent_docs:
-            parent_doc_id = collection.id
-            break  # Get the first parent document
+            parent_doc_id = collection.id  # Assume the first parent document is the right one
+            
+            # Check if the "users" subcollection exists inside this parent document
+            subcollection_ref = db.collection(parent_doc_id).document("users").collection(user_id)
+            doc_ref = subcollection_ref.document(user_id)
+            doc = doc_ref.get()
 
-        if not parent_doc_id:
-            raise HTTPException(status_code=404, detail="No parent document found")
+            if doc.exists:
+                return {"user_id": user_id, **doc.to_dict()}
 
-        # Fetch user data from the subcollection
-        doc_ref = db.collection(parent_doc_id).document("users").collection(user_id).document(user_id)
-        doc = doc_ref.get()
-
-        if doc.exists:
-            return {"user_id": user_id, **doc.to_dict()}
-        else:
-            raise HTTPException(status_code=404, detail="User not found in subcollection")
+        raise HTTPException(status_code=404, detail="User not found in Firestore")
 
     except FirebaseError as e:
         raise HTTPException(status_code=500, detail=f"Firestore error: {str(e)}")
-
